@@ -4,7 +4,7 @@ A modern, responsive, and animated personal finance tracker with spring physics,
 
 ---
 
-ow to Run the App
+How to Run the App
 
 Option 1: Double Click Launcher (Easiest)
 Simply double-click [`run_app.bat`](file:///C:/Users/LENOVO/.gemini/antigravity/scratch/finance-logger-app/run_app.bat) in this folder.
@@ -19,7 +19,7 @@ Then open your browser to: **`http://127.0.0.1:5000`**
 
 ---
 
-✨ Features
+Features
 
   Fast Transaction Logger: Log income and expenses with categories, payment methods, recurring bills, and tags.
   Deals & Bargains Vault: Track sales, promo codes, wishlist discounts, and calculate total money saved.
