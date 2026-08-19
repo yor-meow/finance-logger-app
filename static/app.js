@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAuth(); // check login status first
 });
 
+  document.getElementById('login-form').addEventListener('submit', handleLogin);
+document.getElementById('register-form').addEventListener('submit', handleRegister);
+});
 
 
 async function checkAuth() {
