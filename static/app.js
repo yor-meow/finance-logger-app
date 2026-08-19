@@ -69,6 +69,7 @@ async function checkAuth() {
 }
 
 async function handleLogin(e) {
+    alert('Login clicked!');
     e.preventDefault();
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
