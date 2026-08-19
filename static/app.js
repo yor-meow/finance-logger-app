@@ -5,13 +5,16 @@ let activeDealsCache = [];
 let activeAccountsCache = [];
 let searchTimeout = null;
 
+
+let currentUser = null;
+
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   setDefaultDates();
-  loadAllData();
+  checkAuth(); // check login status first
 });
-// Auth state
-let currentUser = null;
+
+
 
 async function checkAuth() {
   try {
@@ -21,15 +24,12 @@ async function checkAuth() {
       currentUser = user;
       document.getElementById('auth-overlay').classList.add('hidden');
       document.getElementById('app-container').classList.remove('hidden');
-      // Load data
       loadAllData();
     } else {
-      // Not logged in
       document.getElementById('auth-overlay').classList.remove('hidden');
       document.getElementById('app-container').classList.add('hidden');
     }
   } catch (e) {
-    // Show login
     document.getElementById('auth-overlay').classList.remove('hidden');
     document.getElementById('app-container').classList.add('hidden');
   }
@@ -66,7 +66,8 @@ async function handleRegister(e) {
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password }),
+      credentials: 'include'
     });
     const data = await res.json();
     if (res.ok) {
@@ -92,6 +93,7 @@ function showRegister() {
   document.getElementById('auth-form-container').classList.add('hidden');
   document.getElementById('register-form-container').classList.remove('hidden');
 }
+
 function showLogin() {
   document.getElementById('register-form-container').classList.add('hidden');
   document.getElementById('auth-form-container').classList.remove('hidden');
@@ -104,7 +106,7 @@ function setDefaultDates() {
 }
 
 function initTheme() {
-  const savedTheme = localStorage.getItem('bouncy_theme') || 'light';   // default to light
+  const savedTheme = localStorage.getItem('bouncy_theme') || 'light';
   if (savedTheme === 'light') {
     document.documentElement.classList.remove('dark');
     updateThemeIcon('light');
@@ -169,7 +171,7 @@ async function loadAllData() {
 
 async function loadSummary() {
   try {
-    const res = await fetch('/api/summary');
+    const res = await fetch('/api/summary', { credentials: 'include' });
     const data = await res.json();
     animateValue('kpi-net-balance', data.net_balance, '₱');
     animateValue('kpi-income', data.total_income, '₱');
@@ -261,7 +263,7 @@ async function loadTransactions() {
     if (search) params.append('search', search);
     if (type) params.append('type', type);
     if (category) params.append('category', category);
-    const res = await fetch(`/api/transactions?${params.toString()}`);
+    const res = await fetch(`/api/transactions?${params.toString()}`, { credentials: 'include' });
     const data = await res.json();
     const txs = data.transactions || [];
     const tbody = document.getElementById('transactions-table-body');
@@ -343,7 +345,7 @@ function populateCategoryFilter(txs) {
 async function loadDeals(status = '') {
   try {
     const url = status && status !== 'all' ? `/api/deals?status=${status}` : '/api/deals';
-    const res = await fetch(url);
+    const res = await fetch(url, { credentials: 'include' });
     const data = await res.json();
     const deals = data.deals || [];
     activeDealsCache = deals;
@@ -463,7 +465,7 @@ function populateDealsInTxModal(deals) {
 
 async function loadBudgets() {
   try {
-    const res = await fetch('/api/budgets');
+    const res = await fetch('/api/budgets', { credentials: 'include' });
     const data = await res.json();
     const budgets = data.budgets || [];
     renderBudgetMetersFull(budgets);
@@ -543,7 +545,7 @@ function renderBudgetMetersFull(budgets) {
 
 async function loadGoals() {
   try {
-    const res = await fetch('/api/goals');
+    const res = await fetch('/api/goals', { credentials: 'include' });
     const data = await res.json();
     const goals = data.goals || [];
     const container = document.getElementById('goals-grid');
@@ -589,7 +591,7 @@ async function loadGoals() {
 
 async function loadAccounts(typeFilter = 'all') {
   try {
-    const res = await fetch('/api/accounts');
+    const res = await fetch('/api/accounts', { credentials: 'include' });
     const data = await res.json();
     let accounts = data.accounts || [];
     activeAccountsCache = accounts;
@@ -756,13 +758,15 @@ async function submitAccount(e) {
       res = await fetch(`/api/accounts/${accId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     } else {
       res = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     }
     if (res.ok) {
@@ -779,7 +783,7 @@ async function submitAccount(e) {
 
 async function deleteAccount(id) {
   if (!confirm('Are you sure you want to remove this bank account?')) return;
-  await fetch(`/api/accounts/${id}`, { method: 'DELETE' });
+  await fetch(`/api/accounts/${id}`, { method: 'DELETE', credentials: 'include' });
   showToast('Account removed');
   loadAccounts();
   loadSummary();
@@ -803,7 +807,8 @@ async function submitQuickBalance(e) {
     const res = await fetch(`/api/accounts/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(acc)
+      body: JSON.stringify(acc),
+      credentials: 'include'
     });
     if (res.ok) {
       closeModal('modal-quick-balance');
@@ -819,9 +824,9 @@ async function submitQuickBalance(e) {
 
 async function loadAnalytics() {
   try {
-    const res = await fetch('/api/summary');
+    const res = await fetch('/api/summary', { credentials: 'include' });
     const data = await res.json();
-    const txRes = await fetch('/api/transactions');
+    const txRes = await fetch('/api/transactions', { credentials: 'include' });
     const txData = await txRes.json();
     const txs = txData.transactions || [];
     const expenseTxs = txs.filter(t => t.type === 'expense');
@@ -988,13 +993,15 @@ async function submitTransaction(e) {
       res = await fetch(`/api/transactions/${txId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     } else {
       res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     }
     if (res.ok) {
@@ -1036,13 +1043,15 @@ async function submitDeal(e) {
       res = await fetch(`/api/deals/${dealId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     } else {
       res = await fetch('/api/deals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     }
     if (res.ok) {
@@ -1067,7 +1076,8 @@ async function submitBudget(e) {
     const res = await fetch('/api/budgets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      credentials: 'include'
     });
     if (res.ok) {
       closeModal('modal-budget');
@@ -1095,13 +1105,15 @@ async function submitGoal(e) {
       res = await fetch(`/api/goals/${goalId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     } else {
       res = await fetch('/api/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
     }
     if (res.ok) {
@@ -1117,14 +1129,14 @@ async function submitGoal(e) {
 
 async function deleteTransaction(id) {
   if (!confirm('Are you sure you want to delete this transaction?')) return;
-  await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+  await fetch(`/api/transactions/${id}`, { method: 'DELETE', credentials: 'include' });
   showToast('Transaction removed');
   loadAllData();
 }
 
 async function deleteDeal(id) {
   if (!confirm('Remove this deal?')) return;
-  await fetch(`/api/deals/${id}`, { method: 'DELETE' });
+  await fetch(`/api/deals/${id}`, { method: 'DELETE', credentials: 'include' });
   showToast('Deal removed');
   loadDeals();
   loadSummary();
@@ -1132,7 +1144,7 @@ async function deleteDeal(id) {
 
 async function deleteBudget(id) {
   if (!confirm('Delete budget limit?')) return;
-  await fetch(`/api/budgets/${id}`, { method: 'DELETE' });
+  await fetch(`/api/budgets/${id}`, { method: 'DELETE', credentials: 'include' });
   showToast('Budget deleted');
   loadBudgets();
   loadSummary();
@@ -1140,7 +1152,7 @@ async function deleteBudget(id) {
 
 async function deleteGoal(id) {
   if (!confirm('Remove this savings goal?')) return;
-  await fetch(`/api/goals/${id}`, { method: 'DELETE' });
+  await fetch(`/api/goals/${id}`, { method: 'DELETE', credentials: 'include' });
   showToast('Goal removed');
   loadGoals();
 }
@@ -1160,13 +1172,14 @@ async function contributeToGoal(id, current) {
   const add = prompt('How much money would you like to deposit towards this goal? (₱)', '500');
   if (!add || isNaN(parseFloat(add))) return;
   const newAmount = current + parseFloat(add);
-  const goal = (await (await fetch('/api/goals')).json()).goals.find(g => g.id === id);
+  const goal = (await (await fetch('/api/goals', { credentials: 'include' })).json()).goals.find(g => g.id === id);
   if (!goal) return;
   goal.current_amount = newAmount;
   await fetch(`/api/goals/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(goal)
+    body: JSON.stringify(goal),
+    credentials: 'include'
   });
   triggerBouncyCelebration();
   showToast(`Deposited ₱${parseFloat(add).toFixed(2)} to ${goal.title}! 🎉`);
@@ -1247,7 +1260,8 @@ async function submitAddMoney(e) {
     const res = await fetch('/api/transactions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      credentials: 'include'
     });
     if (res.ok) {
       closeModal('modal-add-money');
@@ -1303,7 +1317,7 @@ document.addEventListener('click', (e) => {
 
 async function seedDemoData() {
   try {
-    const res = await fetch('/api/seed', { method: 'POST' });
+    const res = await fetch('/api/seed', { method: 'POST', credentials: 'include' });
     if (res.ok) {
       triggerBouncyCelebration();
       showToast('Loaded demo dataset! 🚀');
@@ -1320,7 +1334,7 @@ function exportDataCSV() {
 }
 
 async function exportDataJSON() {
-  const res = await fetch('/api/export/json');
+  const res = await fetch('/api/export/json', { credentials: 'include' });
   const data = await res.json();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1345,7 +1359,8 @@ async function importDataJSON(e) {
       const res = await fetch('/api/import/json', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: 'include'
       });
       if (res.ok) {
         triggerBouncyCelebration();
@@ -1361,7 +1376,7 @@ async function importDataJSON(e) {
 
 async function resetAllData() {
   if (!confirm('WARNING: This will permanently delete all logged transactions, deals, and budgets! Continue?')) return;
-  await fetch('/api/reset', { method: 'POST' });
+  await fetch('/api/reset', { method: 'POST', credentials: 'include' });
   showToast('All data cleared');
   loadAllData();
 }
