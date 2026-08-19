@@ -10,6 +10,92 @@ document.addEventListener('DOMContentLoaded', () => {
   setDefaultDates();
   loadAllData();
 });
+// Auth state
+let currentUser = null;
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me', { credentials: 'include' });
+    if (res.ok) {
+      const user = await res.json();
+      currentUser = user;
+      document.getElementById('auth-overlay').classList.add('hidden');
+      document.getElementById('app-container').classList.remove('hidden');
+      // Load data
+      loadAllData();
+    } else {
+      // Not logged in
+      document.getElementById('auth-overlay').classList.remove('hidden');
+      document.getElementById('app-container').classList.add('hidden');
+    }
+  } catch (e) {
+    // Show login
+    document.getElementById('auth-overlay').classList.remove('hidden');
+    document.getElementById('app-container').classList.add('hidden');
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('Logged in successfully!');
+      checkAuth();
+    } else {
+      showToast(data.error || 'Login failed', 'error');
+    }
+  } catch (err) {
+    showToast('Error logging in', 'error');
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const username = document.getElementById('register-username').value;
+  const password = document.getElementById('register-password').value;
+  try {
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showToast('Account created! Please log in.');
+      showLogin();
+    } else {
+      showToast(data.error || 'Registration failed', 'error');
+    }
+  } catch (err) {
+    showToast('Error registering', 'error');
+  }
+}
+
+async function handleLogout() {
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  currentUser = null;
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  document.getElementById('app-container').classList.add('hidden');
+  showToast('Logged out');
+}
+
+function showRegister() {
+  document.getElementById('auth-form-container').classList.add('hidden');
+  document.getElementById('register-form-container').classList.remove('hidden');
+}
+function showLogin() {
+  document.getElementById('register-form-container').classList.add('hidden');
+  document.getElementById('auth-form-container').classList.remove('hidden');
+}
 
 function setDefaultDates() {
   const today = new Date().toISOString().split('T')[0];
