@@ -678,7 +678,7 @@ def run(port=PORT, open_browser=True):
     init_db()
     seed_demo_data()
     
-    server_address = ('127.0.0.1', port)
+    server_address = ('0.0.0.0', port)
     
     class ReusableTCPServer(socketserver.TCPServer):
         allow_reuse_address = True
