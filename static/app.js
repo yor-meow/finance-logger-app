@@ -69,17 +69,24 @@ async function checkAuth() {
 }
 
 async function handleLogin(e) {
-    alert('Login clicked!');
     e.preventDefault();
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
+    
+    console.log('Username:', username);
+    console.log('Password:', password);
+    
     try {
         const res = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
+        
+        console.log('Response status:', res.status);
         const data = await res.json();
+        console.log('Response data:', data);
+        
         if (res.ok && data.token) {
             setToken(data.token);
             showToast('Logged in successfully!');
@@ -88,6 +95,7 @@ async function handleLogin(e) {
             showToast(data.error || 'Login failed', 'error');
         }
     } catch (err) {
+        console.error('Fetch error:', err);
         showToast('Error logging in', 'error');
     }
 }
