@@ -26,7 +26,6 @@ class FinanceAPIHandler(http.server.SimpleHTTPRequestHandler):
     def send_json(self, data, status=200):
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
@@ -62,10 +61,6 @@ class FinanceAPIHandler(http.server.SimpleHTTPRequestHandler):
     # -------------------- OPTIONS --------------------
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Cookie')
-        self.send_header('Access-Control-Allow-Credentials', 'true')
         self.end_headers()
 
     # -------------------- GET handlers --------------------
@@ -379,9 +374,8 @@ class FinanceAPIHandler(http.server.SimpleHTTPRequestHandler):
         # Send cookie
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Credentials', 'true')
-        self.send_header('Set-Cookie', f'session_token={token}; Path=/; HttpOnly')
+        # ✅ Remove CORS headers – they break credentials
+        self.send_header('Set-Cookie', f'session_token={token}; Path=/; HttpOnly; Secure; SameSite=Lax')
         self.end_headers()
         self.wfile.write(json.dumps({'success': True, 'message': 'Login successful'}).encode('utf-8'))
 
